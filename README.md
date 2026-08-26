@@ -185,8 +185,3 @@ Potential enhancements for future iterations of this platform:
 - **Real-Time Tracking**: Live order status tracking using WebSockets.
 
 ---
-
-## Author
-
-- **Name**: [Your Name]
-- **Course / College**: [Course Name / College Name]
