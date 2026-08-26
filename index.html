@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Table & Co. — Dining & Food Delivery</title>
+
+    <!-- Google Fonts: Inter (400, 500, 600, 700) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- External Stylesheets -->
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="auth/auth.css">
+</head>
+
+<body>
+
+    <!-- Navigation Bar -->
+    <header class="navbar-header">
+        <nav class="navbar" aria-label="Main Navigation">
+
+            <!-- Brand Logo -->
+            <div class="navbar-left">
+                <a href="#" class="navbar-logo" id="nav-logo">
+                    Table & Co
+                </a>
+            </div>
+
+            <!-- Navigation Controls -->
+            <div class="navbar-right">
+                <!-- Explore Dropdown Trigger -->
+                <div class="nav-item nav-explore-wrapper" id="nav-explore-wrapper">
+                    <button type="button" class="nav-explore-btn" id="nav-explore-btn" aria-expanded="false"
+                        aria-haspopup="true">
+                        <span>Explore</span>
+                        <svg class="chevron-icon" width="12" height="12" viewBox="0 0 12 12" fill="none"
+                            xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.75"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Log In Button / Auth Area -->
+                <div class="nav-item nav-login-wrapper" id="nav-auth-wrapper">
+                    <button type="button" class="btn-login" id="btn-login">
+                        Log In
+                    </button>
+                </div>
+            </div>
+
+        </nav>
+    </header>
+
+    <!-- Hero Slider Section -->
+    <main class="main-content">
+        <section class="hero" id="hero-section" aria-label="Hero Section">
+            <div class="hero-slider-viewport">
+                <div class="hero-slider-track" id="hero-slider-track">
+
+                    <!-- Dynamic Brand Slide -->
+                    <div class="hero-slide slide-1" id="hero-background">
+                        <div class="slide-content-left">
+                            <h1 class="hero-title" id="hero-heading">BURGER<br>DISTRICT</h1>
+                            <p class="hero-subtitle" id="hero-subtitle">Big. Juicy. Delicious.</p>
+                            <a href="menu/menu.html" class="btn-hero-explore" id="hero-button">
+                                <span>Enter Burger District</span>
+                                <span class="btn-arrow">&rarr;</span>
+                            </a>
+                        </div>
+                        <div class="slide-content-right">
+                            <img src="assets/burger.png" alt="Burger District Gourmet Platter" class="hero-burger-img"
+                                id="hero-image" />
+                        </div>
+                    </div>
+
+                    <!-- Slide 2 -->
+                    <div class="hero-slide slide-2" id="slide-2">
+                        <div class="slide-content-left"></div>
+                        <div class="slide-content-right"></div>
+                    </div>
+
+                    <!-- Slide 3 -->
+                    <div class="hero-slide slide-3" id="slide-3">
+                        <div class="slide-content-left"></div>
+                        <div class="slide-content-right"></div>
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <!-- External JavaScript -->
+    <script src="auth/auth.js"></script>
+    <script src="data/brands.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>

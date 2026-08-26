@@ -1,0 +1,42 @@
+/* ==========================================================================
+   BREW BAZAAR MENU STYLESHEET
+   Reuses core menu design system while applying Brew Bazaar dark coffee accent (#232323).
+   ========================================================================== */
+
+@import "../menu/menu.css";
+
+:root {
+    /* Override Brand Accent Colors for Brew Bazaar */
+    --color-accent: #232323;
+    --color-accent-hover: #111111;
+    --color-brand-orange: #232323;
+}
+
+/* Category Pill Active Color */
+.pill-btn.active {
+    background-color: var(--color-accent) !important;
+    color: #FFFFFF !important;
+}
+
+/* Add + Button Color */
+.btn-add {
+    background-color: var(--color-accent) !important;
+}
+
+.btn-add:hover {
+    background-color: var(--color-accent-hover) !important;
+}
+
+/* Checkout Button Color */
+.btn-checkout:not(:disabled) {
+    background-color: var(--color-accent) !important;
+}
+
+.btn-checkout:not(:disabled):hover {
+    background-color: var(--color-accent-hover) !important;
+}
+
+/* Toast Accent Color */
+.cart-toast::before {
+    color: var(--color-accent) !important;
+}

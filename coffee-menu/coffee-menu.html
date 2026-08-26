@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brew Bazaar — Menu | Table & Co</title>
+
+    <!-- Google Fonts: Inter (400, 500, 600, 700, 800) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Menu Stylesheet -->
+    <link rel="stylesheet" href="coffee-menu.css">
+    <link rel="stylesheet" href="../auth/auth.css">
+</head>
+
+<body data-brand="coffee">
+
+    <!-- Navigation Bar -->
+    <header class="menu-header">
+        <nav class="menu-navbar" aria-label="Menu Navigation">
+
+            <!-- Brand Logo & Sub-brand -->
+            <div class="navbar-left">
+                <a href="../index.html" class="nav-brand-logo">Table & Co</a>
+                <span class="nav-brand-divider"></span>
+                <span class="nav-subbrand">BREW BAZAAR</span>
+            </div>
+
+            <!-- Navigation Links -->
+            <div class="navbar-right">
+                <ul class="nav-links">
+                    <li><a href="#" class="nav-link active">Menu</a></li>
+                    <li><a href="#" class="nav-link">Combos</a></li>
+                    <li><a href="#" class="nav-link">About Us</a></li>
+                    <li><a href="#" class="nav-link">Offers</a></li>
+                    <li><a href="#" class="nav-link">Contact</a></li>
+                </ul>
+
+                <div class="nav-actions">
+                    <!-- Search Icon Button -->
+                    <button type="button" class="icon-btn" aria-label="Search">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </button>
+
+                    <!-- Auth Section -->
+                    <div id="nav-auth-wrapper" style="display: inline-block;"></div>
+                </div>
+            </div>
+
+        </nav>
+    </header>
+
+    <!-- Main Layout Container -->
+    <div class="menu-layout-container">
+
+        <!-- Cart Sidebar -->
+        <aside class="cart-sidebar" id="cart-sidebar" aria-label="Shopping Cart">
+            <div class="cart-panel" id="cart-panel">
+
+                <div class="cart-header">
+                    <h2 class="cart-title">Your Cart</h2>
+                    <span class="cart-badge" id="cart-badge">0</span>
+                </div>
+
+                <div class="cart-items-list" id="cart-items-list">
+                </div>
+
+                <hr class="cart-divider" />
+
+                <div class="cart-summary">
+                    <div class="summary-row">
+                        <span>Subtotal</span>
+                        <span id="cart-subtotal">₹0</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Delivery Fee</span>
+                        <span id="cart-delivery">₹0</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Taxes</span>
+                        <span id="cart-tax">₹0</span>
+                    </div>
+                </div>
+
+                <hr class="cart-divider" />
+
+                <div class="cart-total-row">
+                    <span class="total-label">Total</span>
+                    <span class="total-amount" id="cart-total">₹0</span>
+                </div>
+
+                <button type="button" class="btn-checkout" id="btn-checkout" disabled>
+                    <span>Checkout</span>
+                    <span class="checkout-arrow">&rarr;</span>
+                </button>
+
+                <div class="cart-free-delivery">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="1" y="3" width="15" height="13"></rect>
+                        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                        <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                        <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                    </svg>
+                    <span>Free delivery on orders above ₹499</span>
+                </div>
+
+            </div>
+        </aside>
+
+        <!-- Product Grid Area -->
+        <main class="main-menu-content">
+
+            <header class="menu-heading-group">
+                <span class="menu-subheading">Our Menu</span>
+                <h1 class="menu-main-title">Coffee</h1>
+            </header>
+
+            <!-- Category Filter Pills Bar -->
+            <div class="category-pills" role="tablist" aria-label="Food Categories">
+                <button type="button" class="pill-btn active" data-category="All" role="tab" aria-selected="true">All</button>
+                <button type="button" class="pill-btn" data-category="Coffee" role="tab" aria-selected="false">Coffee</button>
+                <button type="button" class="pill-btn" data-category="Tea" role="tab" aria-selected="false">Tea</button>
+                <button type="button" class="pill-btn" data-category="Snacks" role="tab" aria-selected="false">Snacks</button>
+                <button type="button" class="pill-btn" data-category="Desserts" role="tab" aria-selected="false">Desserts</button>
+            </div>
+
+            <!-- Product Cards Grid -->
+            <section class="product-grid" id="product-grid" aria-label="Coffee & Snacks Selection">
+            </section>
+
+        </main>
+
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="cart-toast" class="cart-toast" aria-live="polite"></div>
+
+    <!-- JavaScript Files -->
+    <script src="../auth/auth.js"></script>
+    <script src="../data/menu.js"></script>
+    <script>
+        window.CURRENT_BRAND_SLUG = 'coffee';
+    </script>
+    <script src="../menu/menu.js"></script>
+</body>
+
+</html>

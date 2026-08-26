@@ -1,0 +1,42 @@
+/* ==========================================================================
+   PIZZA PALACE MENU STYLESHEET
+   Reuses core menu design system while applying Pizza Palace theme accent (#C62828).
+   ========================================================================== */
+
+@import "../menu/menu.css";
+
+:root {
+    /* Override Brand Accent Colors for Pizza Palace */
+    --color-accent: #C62828;
+    --color-accent-hover: #B71C1C;
+    --color-brand-orange: #C62828;
+}
+
+/* Category Pill Active Color */
+.pill-btn.active {
+    background-color: var(--color-accent) !important;
+    color: #FFFFFF !important;
+}
+
+/* Add + Button Color */
+.btn-add {
+    background-color: var(--color-accent) !important;
+}
+
+.btn-add:hover {
+    background-color: var(--color-accent-hover) !important;
+}
+
+/* Checkout Button Color */
+.btn-checkout:not(:disabled) {
+    background-color: var(--color-accent) !important;
+}
+
+.btn-checkout:not(:disabled):hover {
+    background-color: var(--color-accent-hover) !important;
+}
+
+/* Toast Accent Color */
+.cart-toast::before {
+    color: var(--color-accent) !important;
+}
