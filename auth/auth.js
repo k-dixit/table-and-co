@@ -1,6 +1,8 @@
 // Handles user authentication, registration, login sessions, and navbar state.
 // localStorage keys used: tableCoUsers, tableCoCurrentUser, tableCoReturnUrl.
 
+const API_URL = "http://localhost:5000/api";
+const TOKEN_KEY = "tableCoToken";
 // --- Storage Helpers ---
 
 // Reads all registered users from localStorage.
@@ -22,27 +24,33 @@ function getCurrentUser() {
 
 // Checks if a user is currently logged in.
 function isLoggedIn() {
-    return getCurrentUser() !== null;
+    return localStorage.getItem(TOKEN_KEY) !== null;
 }
 
 // Logs out the current user by removing the session key.
 function logoutUser() {
     localStorage.removeItem("tableCoCurrentUser");
+    localStorage.removeItem(TOKEN_KEY);
 }
 
 // Saves session user data and redirects to return URL or homepage.
-function completeAuthentication(userObject) {
-    // Never store passwords in the active session
+function completeAuthentication(userObject, token, phone) {
     var sessionUser = {
-        id:    userObject.id,
-        name:  userObject.name,
+        id: userObject.id,
+        name: userObject.name,
         email: userObject.email,
-        phone: userObject.phone
+        phone: phone || userObject.phone || ""
     };
-    localStorage.setItem("tableCoCurrentUser", JSON.stringify(sessionUser));
 
-    // Redirect to checkout or stored return page if available
+    localStorage.setItem(
+        "tableCoCurrentUser",
+        JSON.stringify(sessionUser)
+    );
+
+    localStorage.setItem(TOKEN_KEY, token);
+
     var returnUrl = localStorage.getItem("tableCoReturnUrl");
+
     if (returnUrl) {
         localStorage.removeItem("tableCoReturnUrl");
         window.location.href = returnUrl;
@@ -103,21 +111,21 @@ function togglePassword(inputId, buttonEl) {
 // --- User Registration ---
 
 // Validates registration form inputs and creates a new user account.
-function handleRegistration(event) {
+
+async function handleRegistration(event) {
     if (event) event.preventDefault();
     clearAllErrors();
 
-    var name            = document.getElementById("register-name").value.trim();
-    var email           = document.getElementById("register-email").value.trim();
-    var phone           = document.getElementById("register-phone").value.trim();
-    var password        = document.getElementById("register-password").value;
+    var name = document.getElementById("register-name").value.trim();
+    var email = document.getElementById("register-email").value.trim();
+    var phone = document.getElementById("register-phone").value.trim();
+    var password = document.getElementById("register-password").value;
     var confirmPassword = document.getElementById("register-confirm-password").value;
 
     var isValid = true;
 
-    // Validate all fields to display all inline errors simultaneously
     if (!name || name.length < 2) {
-        showError("register-name-error", name ? "Full name must be at least 2 characters." : "Full name is required.", "register-name");
+        showError("register-name-error", "Full name must be at least 2 characters.", "register-name");
         isValid = false;
     }
 
@@ -137,8 +145,8 @@ function handleRegistration(event) {
         isValid = false;
     }
 
-    if (!password || password.length < 6) {
-        showError("register-password-error", password ? "Password must be at least 6 characters." : "Password is required.", "register-password");
+    if (!password || password.length < 8) {
+        showError("register-password-error", "Password must be at least 8 characters.", "register-password");
         isValid = false;
     }
 
@@ -152,34 +160,58 @@ function handleRegistration(event) {
 
     if (!isValid) return;
 
-    var users = getUsers();
-    var emailTaken = users.some(function (u) { return u.email.toLowerCase() === email.toLowerCase(); });
-    if (emailTaken) {
-        showError("register-email-error", "An account with this email already exists.", "register-email");
-        return;
+    try {
+        var response = await fetch(API_URL + "/auth/register", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                name: name,
+                email: email,
+                password: password
+            })
+        });
+
+        var result = await response.json();
+
+        if (!response.ok) {
+            var message = result.message || "Registration failed.";
+
+            if (response.status === 409) {
+                showError("register-email-error", message, "register-email");
+            } else {
+                var globalError = document.getElementById("register-global-error");
+
+                if (globalError) {
+                    globalError.textContent = message;
+                    globalError.classList.add("active");
+                } else {
+                    alert(message);
+                }
+            }
+
+            return;
+        }
+
+        completeAuthentication(result.user, result.token, phone);
+    } catch (error) {
+        console.error("Registration error:", error);
+
+        alert("Cannot connect to the server. Make sure the backend is running.");
     }
-
-    var newUser = {
-        id:       users.length > 0 ? users[users.length - 1].id + 1 : 1,
-        name:     name,
-        email:    email,
-        phone:    phone,
-        password: password
-    };
-
-    users.push(newUser);
-    saveUsers(users);
-    completeAuthentication(newUser);
 }
+
 
 // --- User Login ---
 
 // Validates login credentials and starts a user session.
-function handleLogin(event) {
+
+async function handleLogin(event) {
     if (event) event.preventDefault();
     clearAllErrors();
 
-    var email    = document.getElementById("login-email").value.trim();
+    var email = document.getElementById("login-email").value.trim();
     var password = document.getElementById("login-password").value;
 
     var isValid = true;
@@ -199,23 +231,42 @@ function handleLogin(event) {
 
     if (!isValid) return;
 
-    var users = getUsers();
-    var matchedUser = users.find(function (u) {
-        return u.email.toLowerCase() === email.toLowerCase() && u.password === password;
-    });
+    try {
+        var response = await fetch(API_URL + "/auth/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                email: email,
+                password: password
+            })
+        });
 
-    if (!matchedUser) {
-        showError("login-password-error", "Invalid email or password.", "login-password");
-        var globalError = document.getElementById("login-global-error");
-        if (globalError) {
-            globalError.textContent = "Invalid email or password.";
-            globalError.classList.add("active");
+        var result = await response.json();
+
+        if (!response.ok) {
+            var message = result.message || "Login failed.";
+            showError("login-password-error", message, "login-password");
+
+            var globalError = document.getElementById("login-global-error");
+
+            if (globalError) {
+                globalError.textContent = message;
+                globalError.classList.add("active");
+            }
+
+            return;
         }
-        return;
-    }
 
-    completeAuthentication(matchedUser);
+        completeAuthentication(result.user, result.token);
+    } catch (error) {
+        console.error("Login error:", error);
+
+        alert("Cannot connect to the server. Make sure the backend is running.");
+    }
 }
+
 
 // --- Navbar Profile Controls ---
 

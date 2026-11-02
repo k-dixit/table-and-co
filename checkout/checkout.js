@@ -1,12 +1,47 @@
 // Handles order checkout, customer details pre-filling, cart summary, and order placement.
 
-var CART_STORAGE_KEY    = "tableCoCart";
-var LAST_ORDER_KEY      = "tableCoLastOrder";
-var TAX_RATE            = 0.10;
-var DELIVERY_THRESHOLD  = 499;   // Free delivery above this subtotal
-var DELIVERY_FEE        = 40;    // Flat delivery fee when subtotal is below threshold
 
-var cart = [];  // Current cart items for the checkout session
+var CART_STORAGE_KEY = "tableCoCart";
+var LAST_ORDER_KEY = "tableCoLastOrder";
+var TAX_RATE = 0.10;
+var DELIVERY_THRESHOLD = 499;
+var DELIVERY_FEE = 40;
+
+var CHECKOUT_API_URL = "http://localhost:5000/api";
+var checkoutCart = [];
+var cart = checkoutCart;
+
+var restaurant = new URLSearchParams(window.location.search)
+    .get("restaurant") || "burger";
+
+var restaurantConfig = {
+    burger: {
+        cartKey: "tableCoCart",
+        menu: typeof menuItems !== "undefined" ? menuItems : [],
+        successName: "Burger District"
+    },
+    pizza: {
+        cartKey: "tableCoCart_pizza",
+        menu: typeof pizzaMenuItems !== "undefined" ? pizzaMenuItems : [],
+        successName: "Pizza Palace"
+    },
+    coffee: {
+        cartKey: "tableCoCart_coffee",
+        menu: typeof coffeeMenuItems !== "undefined" ? coffeeMenuItems : [],
+        successName: "Brew Bazaar"
+    }
+};
+
+if (!restaurantConfig[restaurant]) {
+    restaurant = "burger";
+}
+
+CART_STORAGE_KEY = restaurantConfig[restaurant].cartKey;
+
+function getCheckoutMenu() {
+    return restaurantConfig[restaurant].menu;
+}
+
 
 // --- Startup ---
 
@@ -14,7 +49,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Redirect to login if user is not authenticated
     if (typeof isLoggedIn === 'function' && !isLoggedIn()) {
-        localStorage.setItem("tableCoReturnUrl", "../checkout/checkout.html");
+        localStorage.setItem(
+            "tableCoReturnUrl",
+            "../checkout/checkout.html?restaurant=" + restaurant
+        );
         window.location.href = "../auth/login.html";
         return;
     }
@@ -75,13 +113,20 @@ function loadCart() {
 
         if (isNaN(pId) || isNaN(qty) || qty <= 0) continue;
 
-        if (typeof menuItems !== 'undefined') {
+        var activeMenu = getCheckoutMenu();
+
+        if (activeMenu.length > 0) {
             var found = false;
-            for (var j = 0; j < menuItems.length; j++) {
-                if (menuItems[j].id === pId) { found = true; break; }
+
+            for (var j = 0; j < activeMenu.length; j++) {
+            if (Number(activeMenu[j].id) === pId) {
+                found = true;
+                break;
             }
-            if (!found) continue;
         }
+
+        if (!found) continue;
+    }   
 
         cart.push({ productId: pId, quantity: qty });
     }
@@ -122,7 +167,9 @@ function renderSummary() {
 
     for (var i = 0; i < cart.length; i++) {
         var item    = cart[i];
-        var product = menuItems.find(function (p) { return p.id === item.productId; });
+        var product = getCheckoutMenu().find(function (p) {
+            return Number(p.id) === item.productId;
+        });
         if (!product) continue;
 
         var lineTotal = product.price * item.quantity;
@@ -235,51 +282,94 @@ function validateForm() {
 // --- Order Placement ---
 
 // Validates the form, saves order details to localStorage, clears the cart, and redirects to order success page.
-function placeOrder() {
+
+async function placeOrder() {
     if (!validateForm()) return;
 
     loadCart();
+
     if (cart.length === 0) {
         renderSummary();
+        alert("Your cart is empty.");
         return;
     }
 
-    var subtotal = 0;
-    for (var i = 0; i < cart.length; i++) {
-        var product = menuItems.find(function (p) { return p.id === cart[i].productId; });
-        if (product) subtotal += product.price * cart[i].quantity;
-    }
-    var delivery = subtotal >= DELIVERY_THRESHOLD ? 0 : DELIVERY_FEE;
-    var tax      = Math.round(subtotal * TAX_RATE);
-    var total    = subtotal + delivery + tax;
+    var token = localStorage.getItem("tableCoToken");
 
-    var orderId = 'TC-' + Math.floor(100000 + Math.random() * 900000);
-    var order   = {
-        orderId:   orderId,
-        createdAt: new Date().toISOString(),
-        customer: {
-            name:      document.getElementById('fullName').value.trim(),
-            phone:     document.getElementById('phone').value.trim(),
-            email:     document.getElementById('email').value.trim(),
-            address:   document.getElementById('address').value.trim(),
-            apartment: document.getElementById('landmark') ? document.getElementById('landmark').value.trim() : '',
-            city:      document.getElementById('city').value.trim(),
-            state:     document.getElementById('state').value.trim(),
-            pincode:   document.getElementById('pincode').value.trim()
-        },
-        items: cart.map(function (item) {
-            return { productId: item.productId, quantity: item.quantity };
-        }),
-        pricing: {
-            subtotal: subtotal,
-            delivery: delivery,
-            tax:      tax,
-            total:    total
-        }
+    if (!token) {
+        localStorage.setItem(
+            "tableCoReturnUrl",
+            "../checkout/checkout.html?restaurant=" + restaurant
+        );
+        window.location.href = "../auth/login.html";
+        return;
+    }
+
+    var button = document.getElementById("btn-place-order");
+    var originalButtonText = button ? button.textContent : "";
+
+    if (button) {
+        button.disabled = true;
+        button.textContent = "Placing Order...";
+    }
+
+    var customer = {
+        fullName: document.getElementById("fullName").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        phone: document.getElementById("phone").value.trim(),
+        address: document.getElementById("address").value.trim(),
+        city: document.getElementById("city").value.trim(),
+        state: document.getElementById("state").value.trim(),
+        pincode: document.getElementById("pincode").value.trim()
     };
 
-    localStorage.setItem(LAST_ORDER_KEY, JSON.stringify(order));
-    localStorage.removeItem(CART_STORAGE_KEY);
+    try {
+        var response = await fetch(API_URL + "/orders", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
+            },
+            body: JSON.stringify({
+                restaurant: restaurant,
+                customer: customer,
+                items: cart.map(function (item) {
+                    return {
+                        productId: item.productId,
+                        quantity: item.quantity
+                    };
+                })
+            })
+        });
 
-    window.location.href = '../order-success/success.html';
+        var result = await response.json();
+
+        if (!response.ok || !result.success) {
+            throw new Error(
+                result.message || "Could not place your order."
+            );
+        }
+
+        // Store the order returned by the backend.
+        localStorage.setItem(
+            LAST_ORDER_KEY,
+            JSON.stringify(result.data)
+        );
+
+        // Clear only this restaurant's cart after successful placement.
+        localStorage.removeItem(CART_STORAGE_KEY);
+
+        window.location.href =
+            "../order-success/success.html?restaurant=" + restaurant;
+
+    } catch (error) {
+        console.error("Order placement failed:", error);
+        alert(error.message || "Unable to place order. Please try again.");
+
+        if (button) {
+            button.disabled = false;
+            button.textContent = originalButtonText;
+        }
+    }
 }
+

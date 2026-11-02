@@ -3,24 +3,25 @@
 // --- Restaurant Configuration ---
 
 const currentBrandSlug = window.CURRENT_BRAND_SLUG || 'burger';
-
+const MENU_API_URL = "http://localhost:5000/api";
 // Maps each restaurant slug to its localStorage cart key and menu items getter
 const BRAND_CONFIGS = {
-    'burger': {
-        cartKey: 'tableCoCart',
-        getItems: function () { return typeof menuItems !== 'undefined' ? menuItems : []; }
+    burger: {
+        cartKey: "tableCoCart",
+        restaurant: "burger"
     },
-    'pizza': {
-        cartKey: 'tableCoCart_pizza',
-        getItems: function () { return typeof pizzaMenuItems !== 'undefined' ? pizzaMenuItems : []; }
+    pizza: {
+        cartKey: "tableCoCart_pizza",
+        restaurant: "pizza"
     },
-    'coffee': {
-        cartKey: 'tableCoCart_coffee',
-        getItems: function () { return typeof coffeeMenuItems !== 'undefined' ? coffeeMenuItems : []; }
+    coffee: {
+        cartKey: "tableCoCart_coffee",
+        restaurant: "coffee"
     }
 };
 
-const currentBrand = BRAND_CONFIGS[currentBrandSlug] || BRAND_CONFIGS['burger'];
+const currentBrand =
+    BRAND_CONFIGS[currentBrandSlug] || BRAND_CONFIGS.burger;
 
 // Each restaurant uses a separate localStorage key so carts remain independent.
 const CART_KEY = currentBrand.cartKey;
@@ -33,20 +34,70 @@ const STANDARD_DELIVERY_FEE = 40;
 let activeCategory = 'All';
 let cart = [];
 let toastTimeout = null;
+let menuItemsFromAPI = [];
 
 // --- Startup ---
 
-document.addEventListener('DOMContentLoaded', function () {
-    loadCart();
+document.addEventListener("DOMContentLoaded", async function () {
     setupCategoryFilters();
     setupCartEvents();
-    renderMenu();
-    renderCart();
+
+    const grid = document.getElementById("product-grid");
+
+    if (grid) {
+        grid.innerHTML = '<p class="loading-state">Loading menu...</p>';
+    }
+
+    try {
+        const response = await fetch(
+            `${MENU_API_URL}/menu?restaurant=${currentBrand.restaurant}`
+        );
+
+        if (!response.ok) {
+            throw new Error("Failed to fetch menu");
+        }
+
+        const result = await response.json();
+
+        // Support either a direct array or an object containing items.
+        menuItemsFromAPI = Array.isArray(result)
+            ? result
+            : result.data || result.items || result.menuItems || [];
+
+        // The API must return the correct restaurant's products.
+        menuItemsFromAPI = menuItemsFromAPI.filter(
+            item => item.restaurant === currentBrand.restaurant
+        );
+
+        loadCart();
+        renderMenu();
+        renderCart();
+    } catch (error) {
+        console.error("Menu loading error:", error);
+
+        if (grid) {
+            grid.innerHTML =
+                '<div class="empty-state"><p>Unable to load menu. Please try again.</p></div>';
+        }
+    }
 });
 
-// Returns the menu items array for the active restaurant brand.
 function getMenuItems() {
-    return currentBrand.getItems();
+    return menuItemsFromAPI;
+}
+
+function getImageUrl(imagePath) {
+    if (!imagePath) return "";
+
+    if (/^https?:\/\//i.test(imagePath)) {
+        return imagePath;
+    }
+
+    if (imagePath.startsWith("/uploads/")) {
+        return `http://localhost:5000${imagePath}`;
+    }
+
+    return imagePath;
 }
 
 // Saves the cart array to localStorage.
@@ -182,7 +233,7 @@ function renderMenu() {
             +       '<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>'
             +     '</svg>'
             +   '</button>'
-            +   '<img src="' + product.image + '" alt="' + product.name + '" class="card-img" />'
+            +   '<img src="' + getImageUrl(product.image) + '" alt="' + product.name + '" class="card-img" />'
             + '</div>'
             + '<div class="card-content">'
             +   '<h3 class="product-title">' + product.name + '</h3>'
@@ -235,7 +286,7 @@ function renderCart() {
         subtotal += itemTotal;
 
         return '<div class="cart-item" data-product-id="' + product.id + '">'
-            + '<img src="' + product.image + '" alt="' + product.name + '" class="cart-item-img" />'
+            + '<img src="' + getImageUrl(product.image) + '" alt="' + product.name + '" class="cart-item-img" />'
             + '<div class="cart-item-info">'
             +   '<h3 class="cart-item-name">' + product.name + '</h3>'
             +   '<span class="cart-item-price">₹' + product.price + '</span>'
@@ -290,11 +341,14 @@ function setupCartEvents() {
         btnCheckout.addEventListener('click', function () {
             if (cart.length === 0) return;
 
+            var restaurantSlug = window.CURRENT_BRAND_SLUG || 'burger';
+            var checkoutUrl = '../checkout/checkout.html?restaurant=' + restaurantSlug;
+
             if (typeof isLoggedIn === 'function' && !isLoggedIn()) {
-                localStorage.setItem('tableCoReturnUrl', '../checkout/checkout.html');
+                localStorage.setItem('tableCoReturnUrl', checkoutUrl);
                 window.location.href = '../auth/login.html';
             } else {
-                window.location.href = '../checkout/checkout.html';
+                window.location.href = checkoutUrl;
             }
         });
     }
