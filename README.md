@@ -1,187 +1,312 @@
 # Table & Co. — Multi-Restaurant Food Ordering Platform
 
-Table & Co. is a multi-restaurant food ordering website built using vanilla HTML5, CSS3, and JavaScript. The platform allows users to explore different restaurant outlets, browse data-driven food menus, manage isolated shopping carts across brands, authenticate accounts using browser storage, and complete a validated multi-step checkout process with order confirmation.
+Table & Co. is a full-stack, multi-restaurant food ordering and management website built using HTML5, CSS3, JavaScript, Node.js, Express.js and MongoDB.
 
----
+The platform allows customers to explore three restaurant brands, browse dynamically loaded menus, manage separate shopping carts, register and log in securely, and place orders. Administrators can manage menu items and upload product images through protected backend APIs.
 
 ## Features
 
-- **Multi-Brand Restaurant Showcase**: Dynamic homepage featuring interactive brand switching for three distinct outlets with customized color themes, typography, and imagery.
-- **Data-Driven Dynamic Menus**: Products are rendered dynamically from modular data structures with real-time category filtering (Burgers, Fries, Drinks, Shakes, Pizzas, Coffee, etc.).
-- **Isolated Cart Management**: Full cart functionality (Add, Increase, Decrease, Remove) with isolated `localStorage` keys for each restaurant brand.
-- **Automated Financial Calculations**: Real-time subtotal, 10% tax calculation, and dynamic delivery fee computation (Free delivery on orders ₹499 and above; flat ₹40 fee otherwise).
-- **Client-Side Authentication System**: Tabbed Login and Registration interface with inline validation, duplicate email prevention, password show/hide toggles, and persistent login sessions.
-- **Protected Checkout Flow**: Guest browsing is permitted, but checkout requires authentication. Unauthenticated users are redirected to login and returned seamlessly to checkout upon success.
-- **Form Validation**: Strict client-side validation for delivery details including 10-digit mobile numbers and 6-digit postal pincodes with inline error messaging.
-- **Order Placement & Confirmation**: Unique Order ID generation (`TC-XXXXXX`), order summary persistence (`tableCoLastOrder`), automatic cart clearing upon placement, and detailed confirmation rendering.
-
----
+- **Multi-Brand Restaurant Showcase:** Interactive homepage featuring three restaurant brands with customized themes and imagery.
+- **Dynamic Menus:** Menu items are fetched from MongoDB through backend APIs and rendered dynamically.
+- **Category Filtering:** Filter products by categories such as Burgers, Fries, Drinks, Shakes, Pizzas and Coffee.
+- **Isolated Shopping Carts:** Separate localStorage carts for each restaurant.
+- **User Registration and Login:** Backend-based authentication with bcrypt password hashing.
+- **JWT Authentication:** Token-based authentication for protected API endpoints.
+- **Role-Based Authorization:** Separate customer and administrator roles.
+- **Admin Menu Management:** Create, read, update and delete menu items.
+- **Image Uploads:** Multer handles product image uploads and stores images in the server's uploads directory.
+- **Checkout:** Validated checkout process with customer and delivery information.
+- **Database-Backed Orders:** Customer orders are saved persistently in MongoDB.
+- **Server-Side Price Validation:** Product prices are retrieved from MongoDB rather than trusted from frontend requests.
+- **Order Confirmation:** Displays order details after successful order placement.
 
 ## Restaurants
 
-1. **Burger District**
-   - **Focus**: Gourmet smash burgers, crispy chicken burgers, loaded fries, and thick shakes.
-   - **Cart Storage Key**: `tableCoCart`
-2. **Pizza Palace**
-   - **Focus**: Artisan wood-fired pizzas, garlic breads, sides, and beverages.
-   - **Cart Storage Key**: `tableCoCart_pizza`
-3. **Brew Bazaar**
-   - **Focus**: Specialty coffees, artisanal teas, bakery snacks, and desserts.
-   - **Cart Storage Key**: `tableCoCart_coffee`
-
----
+| Restaurant | Identifier | Cart Storage Key |
+|---|---|---|
+| Burger District | `burger` | `tableCoCart` |
+| Pizza Palace | `pizza` | `tableCoCart_pizza` |
+| Brew Bazaar | `coffee` | `tableCoCart_coffee` |
 
 ## Technologies Used
 
-- **HTML5**: Semantic layout elements, form accessibility, and responsive structure.
-- **CSS3**: Custom properties (CSS variables), Flexbox, Grid, glassmorphism, animations, and custom styling (No frameworks used).
-- **Vanilla JavaScript (ES6)**: DOM manipulation, event delegation, state management, procedural logic, and browser storage handling.
-- **Browser localStorage**: Persistent client-side data storage for user accounts, sessions, carts, and order history.
+### Frontend
+- **HTML5:** Page structure and forms.
+- **CSS3:** Responsive layouts, animations, Flexbox and Grid.
+- **Vanilla JavaScript (ES6):** DOM manipulation, cart management, form validation and API communication.
+- **localStorage:** Maintains separate shopping carts and frontend session information.
 
----
+### Backend
+- **Node.js:** JavaScript runtime environment for executing server-side code.
+- **Express.js:** Framework for creating REST APIs, handling HTTP requests and managing routes.
+- **Mongoose:** ODM library for interacting with MongoDB using schemas and models.
+- **JWT:** Token-based authentication and authorization.
+- **bcrypt:** Secure password hashing and verification.
+- **Multer:** Middleware for handling product image uploads.
+- **CORS:** Allows communication between the frontend and backend development servers.
 
-## Authentication & User Flow
+### Database
+- **MongoDB Community Server:** NoSQL database for storing users, menu items and orders.
+- **MongoDB Compass:** GUI for viewing and managing database collections and documents.
 
-1. **Guest Browsing**: Users can open the website, switch between restaurants, filter menu items, and add products to their cart without logging in.
-2. **Account Registration**: New users register via `auth/login.html` with their full name, email, 10-digit phone number, and password. Duplicate email addresses are automatically flagged and rejected.
-3. **Login & Session Storage**: Logging in verifies credentials against stored accounts (`tableCoUsers`). Upon verification, the user object (excluding the password) is saved into `tableCoCurrentUser`.
-4. **Navbar Profile Integration**: The top navigation bar automatically updates to display the active user's name with a dropdown menu containing account details and a **Logout** button.
-5. **Checkout Protection**: Clicking **Checkout** while logged out saves the target return path into `tableCoReturnUrl` and redirects to the login page. After authentication, the user is automatically returned to the checkout page with their cart intact.
+## System Architecture
 
----
+The project follows a frontend-backend-database architecture.
+
+```text
+                 CUSTOMER / ADMIN
+                        |
+                        v
+              FRONTEND (HTML, CSS, JS)
+                        |
+                   HTTP / JSON
+                        |
+                        v
+               NODE.JS + EXPRESS.JS
+                        |
+              +---------+---------+
+              |         |         |
+              v         v         v
+             JWT      MULTER   API ROUTES
+              |         |         |
+              |         v         |
+              |    Uploads Folder |
+              |                   |
+              +---------+---------+
+                        |
+                        v
+                   MONGOOSE
+                        |
+                        v
+                     MONGODB
+                        |
+              +---------+---------+
+              |         |         |
+              v         v         v
+           menuitems  users     orders
+```
+
+The frontend communicates with the Express backend through HTTP requests. The backend validates requests, interacts with MongoDB through Mongoose and returns JSON responses.
+
+## Database Design
+
+**Database Name:** `tableco`
+
+The database contains three primary collections.
+
+### 1. menuitems
+
+Stores products for all three restaurant brands.
+
+| Field | Data Type | Description |
+|---|---|---|
+| `id` | Number | Application-level menu item ID |
+| `restaurant` | String | burger, pizza or coffee |
+| `name` | String | Product name |
+| `category` | String | Product category |
+| `price` | Number | Product price |
+| `description` | String | Product description |
+| `image` | String | Product image path |
+
+The project contains **69 seeded menu items** across the three restaurants.
+
+A compound unique index is implemented on:
+
+```javascript
+{ restaurant: 1, id: 1 }
+```
+
+This allows different restaurants to use the same menu item ID while preventing duplicate IDs within the same restaurant.
+
+### 2. users
+
+Stores registered customer and administrator accounts.
+
+| Field | Description |
+|---|---|
+| `name` | User's name |
+| `email` | Unique email address |
+| `password` | bcrypt-hashed password |
+| `role` | customer or admin |
+
+Passwords are hashed before being stored in MongoDB.
+
+### 3. orders
+
+Stores customer orders, including:
+
+- Customer information
+- Restaurant identifier
+- Ordered items and quantities
+- Product prices
+- Subtotal
+- Tax
+- Delivery charges
+- Final order total
+
+Orders are saved persistently in MongoDB and retrieved through protected backend APIs.
+
+## Backend Architecture
+
+The backend is organized into separate configuration, middleware, model, route and script directories.
+
+```text
+server/
+|
+|-- config/
+|   |-- db.js
+|
+|-- middleware/
+|   |-- authMiddleware
+|   |-- uploadMiddleware.js
+|
+|-- models/
+|   |-- MenuItem.js
+|   |-- User.js
+|   |-- Order.js
+|
+|-- routes/
+|   |-- authRoutes.js
+|   |-- menuRoutes.js
+|   |-- orderRoutes.js
+|
+|-- scripts/
+|   |-- seedMenu.js
+|
+|-- uploads/
+|
+|-- .gitignore
+|-- package.json
+|-- package-lock.json
+|-- server.js
+```
+
+### Important Backend Files
+
+| File | Responsibility |
+|---|---|
+| `server.js` | Initializes Express, middleware, routes and database connection |
+| `config/db.js` | Establishes MongoDB connection |
+| `models/MenuItem.js` | Defines menu item schema and model |
+| `models/User.js` | Defines user schema and model |
+| `models/Order.js` | Defines order schema and model |
+| `routes/authRoutes.js` | Handles registration and login |
+| `routes/menuRoutes.js` | Handles menu retrieval and CRUD operations |
+| `routes/orderRoutes.js` | Handles order creation and retrieval |
+| `middleware/authMiddleware` | Handles JWT verification and admin authorization |
+| `middleware/uploadMiddleware.js` | Configures Multer image uploads |
+| `scripts/seedMenu.js` | Inserts initial menu data into MongoDB |
+
+## Authentication and Authorization
+
+The application uses JWT-based authentication and bcrypt password hashing.
+
+### Registration
+1. The frontend collects the user's name, email and password.
+2. The information is sent to the backend.
+3. The backend hashes the password using bcrypt.
+4. The user account is stored in MongoDB's `users` collection.
+
+### Login
+1. The user submits their email and password.
+2. The backend searches MongoDB for the user.
+3. bcrypt verifies the submitted password against the stored hash.
+4. If the credentials are valid, the backend generates a signed JWT.
+5. The token is returned to the frontend.
+
+The frontend stores authentication information using:
+
+```javascript
+localStorage.setItem("tableCoToken", token);
+localStorage.setItem("tableCoCurrentUser", user);
+```
+
+### Protected Requests
+
+The frontend sends the JWT through the Authorization header:
+
+```http
+Authorization: Bearer YOUR_TOKEN
+```
+
+The backend uses:
+
+- `verifyToken` to verify authentication.
+- `requireAdmin` to restrict administrator operations.
+
+The middleware verifies the token and identifies the authenticated user before allowing access to protected routes.
+
+## Admin Menu Management and Image Uploads
+
+Administrators can manage menu products using protected REST API endpoints.
+
+### CRUD Operations
+
+| Operation | HTTP Method | Purpose |
+|---|---|---|
+| Create | POST | Add a menu item |
+| Read | GET | Retrieve menu items |
+| Update | PUT | Update a menu item |
+| Delete | DELETE | Remove a menu item |
+
+### Image Upload Workflow
+
+Multer handles product image uploads.
+
+1. An administrator submits an image.
+2. The frontend sends it using `multipart/form-data`.
+3. Multer processes the uploaded file.
+4. The image is stored in the backend uploads directory.
+5. The image path is stored in the corresponding MongoDB document.
+6. Express serves the uploads directory so the frontend can display the image.
+
+MongoDB stores the image path, not the actual image file.
 
 ## Shopping Cart Architecture
 
-Each restaurant operates with a completely isolated shopping cart stored in browser `localStorage`. Adding items to Burger District does not pollute or overwrite the cart of Pizza Palace or Brew Bazaar.
+Each restaurant maintains an independent cart in browser localStorage.
 
-| Restaurant | Storage Key | Schema |
-|---|---|---|
-| Burger District | `tableCoCart` | `[ { productId: Number, quantity: Number } ]` |
-| Pizza Palace | `tableCoCart_pizza` | `[ { productId: Number, quantity: Number } ]` |
-| Brew Bazaar | `tableCoCart_coffee` | `[ { productId: Number, quantity: Number } ]` |
+| Restaurant | Storage Key |
+|---|---|
+| Burger District | `tableCoCart` |
+| Pizza Palace | `tableCoCart_pizza` |
+| Brew Bazaar | `tableCoCart_coffee` |
 
-### Pricing Logic
-- **Subtotal**: Sum of `(product.price * item.quantity)` for all items in the active brand's cart.
-- **Tax**: `Math.round(subtotal * 0.10)` (10% GST).
-- **Delivery Fee**: `₹0` if `subtotal >= ₹499`, otherwise `₹40`.
-- **Total**: `subtotal + deliveryFee + tax`.
+Each cart stores product identifiers and quantities.
 
----
+The frontend handles adding items, updating quantities, removing products and displaying the cart summary.
 
-## Checkout & Order Flow
+## Checkout and Order Workflow
 
-```
-Homepage / Menu Page
-         │
-         ▼
-   Add Items to Cart
-         │
-         ▼
-   Click "Checkout" ──► (Logged out?) ──► Redirect to Auth (tableCoReturnUrl)
-         │                                       │
-         ▼                                       ▼
-  Checkout Page (Pre-filled User Details) ◄──────┘
-         │
-         ▼
-  Fill Delivery Address & Validate Form
-         │
-         ▼
-  Generate Order ID (TC-XXXXXX) & Save to `tableCoLastOrder`
-         │
-         ▼
-  Clear Active Restaurant Cart from localStorage
-         │
-         ▼
-  Redirect to Order Success Page (`order-success/success.html`)
-```
-
----
-
-## Project Structure
-
-```
-Restaurant Chain/
-├── assets/                  # Product imagery & brand graphic assets
-│   ├── burger/              # Burger District product photos
-│   ├── pizza/               # Pizza Palace product photos
-│   ├── coffee/              # Brew Bazaar product photos
-│   ├── burger.png           # Fallback brand banner image
-│   ├── pizza.png            # Fallback brand banner image
-│   └── coffee.png           # Fallback brand banner image
-├── auth/                    # Client-side authentication module
-│   ├── auth.css             # Login & Registration styling
-│   ├── auth.js              # Auth state, validation & navbar dropdown script
-│   └── login.html           # Tabbed Login/Register page
-├── checkout/                # Order checkout module
-│   ├── checkout.css         # Checkout form & summary styling
-│   ├── checkout.html        # Checkout delivery form page
-│   └── checkout.js          # Pre-filling, form validation & order creation
-├── coffee-menu/             # Brew Bazaar outlet module
-│   ├── coffee-menu.css      # Outlet theme overrides
-│   └── coffee-menu.html     # Outlet page
-├── data/                    # Data storage layer
-│   ├── brands.js            # Landing page hero slider configuration
-│   └── menu.js              # Complete menu datasets for all 3 restaurants
-├── menu/                    # Burger District outlet module
-│   ├── menu.css             # Main menu layout & cart sidebar styling
-│   ├── menu.html            # Outlet page
-│   └── menu.js              # Dynamic menu rendering & cart engine
-├── order-success/           # Order confirmation module
-│   ├── success.css          # Confirmation card & summary styling
-│   ├── success.html         # Order confirmation view
-│   └── success.js           # Order summary renderer & fallback handler
-├── pizza-menu/              # Pizza Palace outlet module
-│   ├── pizza-menu.css       # Outlet theme overrides
-│   └── pizza-menu.html      # Outlet page
-├── index.html               # Main landing page & outlet portal
-├── script.js                # Landing page hero carousel script
-├── styles.css               # Global CSS variables & shared UI styles
-└── README.md                # Project documentation
-```
-
----
-
-## Local Storage Data Schema
-
-The application relies strictly on browser `localStorage` for client-side persistence:
-
-- **`tableCoUsers`**: Array storing registered user objects `[{ id, name, email, phone, password }]`.
-- **`tableCoCurrentUser`**: Active user session object `[{ id, name, email, phone }]` (Password excluded for security).
-- **`tableCoReturnUrl`**: String path (e.g., `"../checkout/checkout.html"`) used for post-login redirection.
-- **`tableCoCart`**: Shopping cart array for Burger District.
-- **`tableCoCart_pizza`**: Shopping cart array for Pizza Palace.
-- **`tableCoCart_coffee`**: Shopping cart array for Brew Bazaar.
-- **`tableCoLastOrder`**: Object containing the most recently placed order details, customer information, line items, and pricing breakdown.
-
----
-
-## How to Run
-
-1. **Clone / Download** the project repository to your local computer.
-2. Open the project folder in **Visual Studio Code** or any code editor.
-3. Open `index.html` using a local web server (e.g., VS Code **Live Server** extension) or double-click `index.html` to open directly in any modern web browser (Google Chrome, Microsoft Edge, Firefox, Safari).
-4. No node modules, npm commands, build tools, or backend servers are required.
-
----
-
-## Testing & Quality Assurance
-
-The application flows have been thoroughly verified:
-- **Authentication**: Verified single-page tab switching, password toggling, inline error messages, duplicate email blocking, and login state persistence.
-- **Cart Operations**: Verified item addition, quantity modification (`+`/`-`), removal when quantity reaches 0, and isolated cart keys across all three restaurants.
-- **Checkout & Protection**: Verified redirect of logged-out users, post-authentication return to checkout, auto-filling user details, and strict form validation.
-- **Order Placement**: Verified generation of `TC-XXXXXX` Order ID, storage in `tableCoLastOrder`, cart clearing, and rendering of the confirmation receipt.
-- **Browser Compatibility**: Verified 0 console errors during full end-to-end execution.
-
----
-
-## Future Improvements
-
-Potential enhancements for future iterations of this platform:
-- **Backend & Database**: Integration with Node.js/Express backend and MongoDB/PostgreSQL database.
-- **Secure Password Hashing**: Implementation of bcrypt hashing for user credentials.
-- **Payment Gateway**: Integration of Razorpay/Stripe API for live online payment processing.
-- **Order History**: User profile dashboard displaying past orders retrieved from a server database.
-- **Real-Time Tracking**: Live order status tracking using WebSockets.
-
----
+```text
+Homepage / Restaurant Menu
+           |
+           v
+     Add Items to Cart
+           |
+           v
+       Click Checkout
+           |
+           v
+    Check Authentication
+           |
+      +----+----+
+      |         |
+      v         v
+   Logged In  Logged Out
+      |         |
+      |         v
+      |     Login / Register
+      |         |
+      +----+----+
+           |
+           v
+      Checkout Page
+           |
+           v
+   Validate Delivery Details
+           |
+           v
+   Submit Order with JWT
+           |
+           v
